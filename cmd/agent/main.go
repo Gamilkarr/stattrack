@@ -1,22 +1,50 @@
 package main
 
 import (
-	"github.com/Gamilkarr/stattrack/internal/client"
-	"net/http"
+	"fmt"
+	"time"
+
+	"github.com/go-resty/resty/v2"
 
 	"github.com/Gamilkarr/stattrack/internal/service"
 )
 
+const (
+	UpdateMetricsURL = "http://localhost:8080/update/{type}/{name}/{value}"
+)
+
+type Agent struct {
+	Client  *resty.Client
+	Metrics Metrics
+}
+
+type Metrics interface {
+	UpdateMetrics()
+	GetAllMetrics() []map[string]string
+}
+
+func (a *Agent) SendMetrics() {
+	time.Sleep(10 * time.Second)
+	mSlice := a.Metrics.GetAllMetrics()
+	for _, metric := range mSlice {
+		_, err := a.Client.R().
+			SetHeader("Content-Type", "text/plain").
+			SetPathParams(metric).
+			Post(UpdateMetricsURL)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
 func main() {
-	c := client.Client{
-		Client:         http.Client{},
-		Service:        &service.Service{},
-		CounterMetrics: nil,
-		GaugeMetrics:   nil,
+	agent := Agent{
+		Client:  resty.New(),
+		Metrics: new(service.Metrics),
 	}
 
 	for {
-		c.GetMetrics()
-		c.SendMetrics()
+		agent.Metrics.UpdateMetrics()
+		agent.SendMetrics()
 	}
 }
