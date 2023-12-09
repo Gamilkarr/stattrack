@@ -67,7 +67,7 @@ func (m *Metrics) GetAllMetrics() []map[string]string {
 		result = append(result, map[string]string{"type": "counter", "name": name, "value": fmt.Sprintf("%d", value)})
 	}
 	for name, value := range m.GaugeMetrics {
-		result = append(result, map[string]string{"type": "gauge", "name": name, "value": fmt.Sprintf("%f", value)})
+		result = append(result, map[string]string{"type": "gauge", "name": name, "value": fmt.Sprintf("%g", value)})
 	}
 	return result
 }
