@@ -1,18 +1,22 @@
 package service
 
 import (
+	"fmt"
 	"math/rand"
 	"runtime"
+	"time"
 )
 
-type Service struct {
+type Metrics struct {
+	CounterMetrics map[string]int64
+	GaugeMetrics   map[string]float64
 }
 
-func (s *Service) GetGaugeMetricsMap() map[string]float64 {
+func (m *Metrics) UpdateGaugeMetrics() {
 	x := &runtime.MemStats{}
 	runtime.ReadMemStats(x)
 
-	metricsMap := map[string]float64{
+	m.GaugeMetrics = map[string]float64{
 		"Alloc":         float64(x.Alloc),
 		"TotalAlloc":    float64(x.TotalAlloc),
 		"Sys":           float64(x.Sys),
@@ -42,6 +46,28 @@ func (s *Service) GetGaugeMetricsMap() map[string]float64 {
 		"GCCPUFraction": x.GCCPUFraction,
 		"RandomValue":   rand.Float64(),
 	}
+}
 
-	return metricsMap
+func (m *Metrics) UpdateCounterMetrics() {
+	if m.CounterMetrics == nil {
+		m.CounterMetrics = map[string]int64{"PollCount": 0}
+	}
+	m.CounterMetrics["PollCount"] += 1
+}
+
+func (m *Metrics) UpdateMetrics() {
+	time.Sleep(2 * time.Second)
+	m.UpdateGaugeMetrics()
+	m.UpdateCounterMetrics()
+}
+
+func (m *Metrics) GetAllMetrics() []map[string]string {
+	result := make([]map[string]string, 0, len(m.CounterMetrics)+len(m.GaugeMetrics))
+	for name, value := range m.CounterMetrics {
+		result = append(result, map[string]string{"type": "counter", "name": name, "value": fmt.Sprintf("%d", value)})
+	}
+	for name, value := range m.GaugeMetrics {
+		result = append(result, map[string]string{"type": "gauge", "name": name, "value": fmt.Sprintf("%g", value)})
+	}
+	return result
 }
