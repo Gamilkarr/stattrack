@@ -9,9 +9,7 @@ import (
 	"github.com/Gamilkarr/stattrack/internal/service"
 )
 
-const (
-	UpdateMetricsURL = "http://localhost:8080/update/{type}/{name}/{value}"
-)
+var UpdateMetricsURL = "http://%s/update/{type}/{name}/{value}"
 
 type Agent struct {
 	Client  *resty.Client
@@ -24,13 +22,12 @@ type Metrics interface {
 }
 
 func (a *Agent) SendMetrics() {
-	time.Sleep(10 * time.Second)
 	mSlice := a.Metrics.GetAllMetrics()
 	for _, metric := range mSlice {
 		_, err := a.Client.R().
 			SetHeader("Content-Type", "text/plain").
 			SetPathParams(metric).
-			Post(UpdateMetricsURL)
+			Post(fmt.Sprintf(UpdateMetricsURL, flagRunAddr))
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -43,8 +40,13 @@ func main() {
 		Metrics: new(service.Metrics),
 	}
 
+	parseFlags()
+
 	for {
+		time.Sleep(pollInterval)
 		agent.Metrics.UpdateMetrics()
+
+		time.Sleep(reportInterval)
 		agent.SendMetrics()
 	}
 }

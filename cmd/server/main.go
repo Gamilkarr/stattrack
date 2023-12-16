@@ -17,9 +17,10 @@ func main() {
 			Counter: make(map[string]int64),
 		},
 	}
+	parseFlags()
 	r := chi.NewRouter()
 	r.Post("/update/{type}/{name}/{value}", e.UpdateMetrics)
 	r.Get("/value/{type}/{name}", e.GetValueMetric)
 	r.Get("/", e.GetMetrics)
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServe(flagRunAddr, r))
 }
