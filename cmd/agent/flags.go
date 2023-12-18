@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type NetAddress struct {
@@ -36,13 +35,13 @@ func (n *NetAddress) Set(s string) error {
 	return nil
 }
 
-var (
-	flagRunAddr    string
-	reportInterval time.Duration
-	pollInterval   time.Duration
-)
+type flags struct {
+	flagRunAddr    NetAddress
+	reportInterval int64
+	pollInterval   int64
+}
 
-func parseFlags() {
+func parseFlags() flags {
 	addr := NetAddress{
 		Host: "localhost",
 		Port: 8080,
@@ -53,8 +52,9 @@ func parseFlags() {
 	poll := flag.Int64("p", 2, "metrics update interval in seconds")
 	flag.Parse()
 
-	flagRunAddr = addr.String()
-
-	reportInterval = time.Duration(*report) * time.Second
-	pollInterval = time.Duration(*poll) * time.Second
+	return flags{
+		flagRunAddr:    addr,
+		reportInterval: *report,
+		pollInterval:   *poll,
+	}
 }

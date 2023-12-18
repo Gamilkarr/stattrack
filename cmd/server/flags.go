@@ -35,11 +35,11 @@ func (n *NetAddress) Set(s string) error {
 	return nil
 }
 
-var (
-	flagRunAddr string
-)
+type flags struct {
+	flagRunAddr NetAddress
+}
 
-func parseFlags() {
+func parseFlags() flags {
 	addr := NetAddress{
 		Host: "localhost",
 		Port: 8080,
@@ -47,6 +47,5 @@ func parseFlags() {
 	_ = flag.Value(&addr)
 	flag.Var(&addr, "a", "address and port to run server")
 	flag.Parse()
-
-	flagRunAddr = addr.String()
+	return flags{flagRunAddr: addr}
 }
