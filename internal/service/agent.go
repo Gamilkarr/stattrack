@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"runtime"
-	"time"
 )
 
 type Metrics struct {
@@ -56,7 +55,6 @@ func (m *Metrics) UpdateCounterMetrics() {
 }
 
 func (m *Metrics) UpdateMetrics() {
-	time.Sleep(2 * time.Second)
 	m.UpdateGaugeMetrics()
 	m.UpdateCounterMetrics()
 }
