@@ -1,4 +1,4 @@
-package endpoints
+package handlers
 
 import (
 	"fmt"
@@ -42,7 +42,7 @@ func TestEndpoints_UpdateMetrics(t *testing.T) {
 			statusCode: http.StatusBadRequest,
 		},
 	}
-	e := &Endpoints{
+	e := &Handler{
 		Repo: &repository.MemStorage{
 			Gauge:   make(map[string]float64),
 			Counter: make(map[string]int64),

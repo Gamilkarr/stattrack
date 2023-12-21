@@ -1,4 +1,4 @@
-package main
+package configs
 
 import (
 	"errors"
@@ -8,20 +8,20 @@ import (
 	"strings"
 )
 
-type NetAddress struct {
-	Host string
-	Port int
+type netAddress struct {
+	host string
+	port int
 }
 
-func (n *NetAddress) String() string {
-	return fmt.Sprintf("%s:%d", n.Host, n.Port)
+func (n *netAddress) String() string {
+	return fmt.Sprintf("%s:%d", n.host, n.port)
 }
 
-func (n *NetAddress) Set(s string) error {
+func (n *netAddress) Set(s string) error {
 	host, strPort, _ := strings.Cut(s, ":")
 
 	if host != "" {
-		n.Host = host
+		n.host = host
 	}
 
 	if strPort == "" {
@@ -31,20 +31,20 @@ func (n *NetAddress) Set(s string) error {
 	if parseErr != nil {
 		return errors.New("need address in a form host:port")
 	}
-	n.Port = port
+	n.port = port
 	return nil
 }
 
 type flags struct {
-	flagRunAddr    NetAddress
+	flagRunAddr    netAddress
 	reportInterval int64
 	pollInterval   int64
 }
 
-func parseFlags() flags {
-	addr := NetAddress{
-		Host: "localhost",
-		Port: 8080,
+func parseFlags() (flags, error) {
+	addr := netAddress{
+		host: "localhost",
+		port: 8080,
 	}
 	_ = flag.Value(&addr)
 	flag.Var(&addr, "a", "address and port to run server")
@@ -56,5 +56,5 @@ func parseFlags() flags {
 		flagRunAddr:    addr,
 		reportInterval: *report,
 		pollInterval:   *poll,
-	}
+	}, nil
 }

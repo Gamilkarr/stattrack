@@ -1,27 +1,30 @@
 package main
 
 import (
-	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
 
-	"github.com/Gamilkarr/stattrack/internal/endpoints"
+	config "github.com/Gamilkarr/stattrack/configs/server"
+	"github.com/Gamilkarr/stattrack/internal/handlers"
 	"github.com/Gamilkarr/stattrack/internal/repository"
 )
 
 func main() {
-	e := &endpoints.Endpoints{
-		Repo: &repository.MemStorage{
-			Gauge:   make(map[string]float64),
-			Counter: make(map[string]int64),
-		},
+	repo, err := repository.NewRepo()
+	if err != nil {
+		log.Fatal(err)
+	}
+	e, err := handlers.NewHandler(repo)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	cfg := newConfig()
+	cfg, err := config.NewConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	r := chi.NewRouter()
-	r.Post("/update/{type}/{name}/{value}", e.UpdateMetrics)
-	r.Get("/value/{type}/{name}", e.GetValueMetric)
-	r.Get("/", e.GetMetrics)
-	log.Fatal(http.ListenAndServe(cfg.address, r))
+	r := e.NewRoute()
+
+	log.Fatal(http.ListenAndServe(cfg.Address, r))
 }

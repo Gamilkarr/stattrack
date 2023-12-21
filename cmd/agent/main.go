@@ -1,50 +1,28 @@
 package main
 
 import (
-	"fmt"
+	config "github.com/Gamilkarr/stattrack/configs/agent"
+	"github.com/Gamilkarr/stattrack/internal/client"
+	"log"
 	"time"
-
-	"github.com/go-resty/resty/v2"
-
-	"github.com/Gamilkarr/stattrack/internal/service"
 )
 
-type Agent struct {
-	Client *resty.Client
-	Metrics
-}
-
-type Metrics interface {
-	UpdateMetrics()
-	GetAllMetrics() []map[string]string
-}
-
-func (a *Agent) SendMetrics(url string) {
-	mSlice := a.GetAllMetrics()
-	for _, metric := range mSlice {
-		_, err := a.Client.R().
-			SetHeader("Content-Type", "text/plain").
-			SetPathParams(metric).
-			Post(url)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-}
-
 func main() {
-	agent := Agent{
-		Client:  resty.New(),
-		Metrics: new(service.Metrics),
+	agent, err := client.NewAgent()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	cfg := newConfig()
+	cfg, err := config.NewConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for {
-		time.Sleep(cfg.pollInterval)
+		time.Sleep(cfg.PollInterval)
 		agent.UpdateMetrics()
 
-		time.Sleep(cfg.reportInterval)
-		agent.SendMetrics(getUpdateURL(cfg.address))
+		time.Sleep(cfg.ReportInterval)
+		agent.SendMetrics(cfg.Address)
 	}
 }

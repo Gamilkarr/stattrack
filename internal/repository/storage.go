@@ -5,6 +5,13 @@ type MemStorage struct {
 	Counter map[string]int64
 }
 
+func NewRepo() (*MemStorage, error) {
+	return &MemStorage{
+		Gauge:   make(map[string]float64),
+		Counter: make(map[string]int64),
+	}, nil
+}
+
 func (m *MemStorage) UpdateGaugeMetrics(name string, val float64) error {
 	m.Gauge[name] = val
 	return nil
