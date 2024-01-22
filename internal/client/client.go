@@ -1,10 +1,13 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+
+	"github.com/Gamilkarr/stattrack/internal/models"
 	"github.com/Gamilkarr/stattrack/internal/service"
 	"github.com/go-resty/resty/v2"
-	"log"
 )
 
 type Agent struct {
@@ -14,7 +17,7 @@ type Agent struct {
 
 type Metrics interface {
 	UpdateMetrics()
-	GetAllMetrics() []map[string]string
+	GetAllMetrics() []models.Metric
 }
 
 func NewAgent() (*Agent, error) {
@@ -25,12 +28,13 @@ func NewAgent() (*Agent, error) {
 }
 
 func (a *Agent) SendMetrics(adr string) {
-	url := fmt.Sprintf("http://%s/update/{type}/{name}/{value}", adr)
+	url := fmt.Sprintf("http://%s/update/", adr)
 	mSlice := a.GetAllMetrics()
 	for _, metric := range mSlice {
+		msg, _ := json.Marshal(metric)
 		_, err := a.Client.R().
-			SetHeader("Content-Type", "text/plain").
-			SetPathParams(metric).
+			SetHeader("Content-Type", "application/json").
+			SetBody(msg).
 			Post(url)
 		if err != nil {
 			log.Println(err)
