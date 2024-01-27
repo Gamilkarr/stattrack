@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
@@ -16,9 +17,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer file.Close()
-
 	log.SetOutput(file)
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.InfoLevel)
@@ -27,7 +26,7 @@ func main() {
 	if err != nil {
 		log.WithField("fatal error", err).Fatal()
 	}
-	e, err := handlers.NewHandler(repo)
+	h, err := handlers.NewHandler(repo)
 	if err != nil {
 		log.WithField("fatal error", err).Fatal()
 	}
@@ -37,5 +36,18 @@ func main() {
 		log.WithField("fatal error", err).Fatal()
 	}
 
-	log.WithField("fatal error", http.ListenAndServe(cfg.Address, logger.WithLogging(e.NewRoute()))).Fatal()
+	log.WithField("fatal error", http.ListenAndServe(cfg.Address, logger.WithLogging(NewRouter(h)))).Fatal()
+}
+
+func NewRouter(h *handlers.Handler) *chi.Mux {
+	r := chi.NewRouter()
+	r.Get("/", h.GetMetrics)
+
+	r.Post("/update/", h.UpdateJSONMetrics)
+	r.Post("/update/{type}/{name}/{value}", h.UpdateMetrics)
+
+	r.Post("/value/", h.GetJSONValueMetric)
+	r.Get("/value/{type}/{name}", h.GetValueMetric)
+
+	return r
 }

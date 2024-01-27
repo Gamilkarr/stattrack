@@ -30,7 +30,6 @@ func (h *Handler) UpdateMetrics(res http.ResponseWriter, req *http.Request) {
 		metricForUpdate = models.Metric{
 			ID:    metricName,
 			MType: metricType,
-			Delta: nil,
 			Value: &value,
 		}
 		result = h.Repo.UpdateMetrics(metricForUpdate)
@@ -45,7 +44,6 @@ func (h *Handler) UpdateMetrics(res http.ResponseWriter, req *http.Request) {
 			ID:    metricName,
 			MType: metricType,
 			Delta: &value,
-			Value: nil,
 		}
 		result = h.Repo.UpdateMetrics(metricForUpdate)
 	default:
@@ -61,35 +59,33 @@ func (h *Handler) UpdateMetrics(res http.ResponseWriter, req *http.Request) {
 func (h *Handler) GetValueMetric(res http.ResponseWriter, req *http.Request) {
 	metricType := chi.URLParam(req, "type")
 	metricName := chi.URLParam(req, "name")
-	var metricValue string
-
+	metric := &models.Metric{
+		ID:    metricName,
+		MType: metricType,
+	}
+	var (
+		value string
+		err   error
+	)
 	switch metricType {
 	case models.MetricGauge:
-		metric, err := h.Repo.GetMetricsValue(models.Metric{
-			ID:    metricName,
-			MType: metricType,
-		})
-		if err != nil {
-			http.Error(res, "metric not found", http.StatusNotFound)
-			return
+		if metric, err = h.Repo.GetMetricsValue(*metric); err == nil {
+			value = fmt.Sprintf("%g", *metric.Value)
 		}
-		metricValue = fmt.Sprintf("%g", *metric.Value)
 	case models.MetricCounter:
-		metric, err := h.Repo.GetMetricsValue(models.Metric{
-			ID:    metricName,
-			MType: metricType,
-		})
-		if err != nil {
-			http.Error(res, "metric not found", http.StatusNotFound)
-			return
+		if metric, err = h.Repo.GetMetricsValue(*metric); err == nil {
+			value = fmt.Sprintf("%d", *metric.Delta)
 		}
-		metricValue = fmt.Sprintf("%d", *metric.Delta)
 	default:
 		http.Error(res, "unknown metric type", http.StatusBadRequest)
 		return
 	}
+	if err != nil {
+		http.Error(res, "unknown metric type", http.StatusNotFound)
+		return
+	}
 	res.WriteHeader(http.StatusOK)
-	res.Write([]byte(metricValue))
+	res.Write([]byte(value))
 }
 
 func (h *Handler) GetMetrics(res http.ResponseWriter, req *http.Request) {
