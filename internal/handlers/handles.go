@@ -91,7 +91,7 @@ func (h *Handler) GetValueMetric(res http.ResponseWriter, req *http.Request) {
 func (h *Handler) GetMetrics(res http.ResponseWriter, req *http.Request) {
 	mes := h.Repo.GetMetrics()
 	resJSON, _ := json.Marshal(mes)
-	res.Header().Set("Content-Type", "application/json")
+	res.Header().Set("Content-Type", "text/html")
 	res.Write(resJSON)
 }
 

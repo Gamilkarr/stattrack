@@ -1,6 +1,8 @@
 package client
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -32,12 +34,27 @@ func (a *Agent) SendMetrics(adr string) {
 	mSlice := a.GetAllMetrics()
 	for _, metric := range mSlice {
 		msg, _ := json.Marshal(metric)
+		cMsg, _ := Compress(msg)
 		_, err := a.Client.R().
 			SetHeader("Content-Type", "application/json").
-			SetBody(msg).
+			SetHeader("Content-Encoding", "gzip").
+			SetHeader("Accept-Encoding", "gzip").
+			SetBody(cMsg).
 			Post(url)
 		if err != nil {
 			log.Println(err)
 		}
 	}
+}
+
+// Compress сжимает слайс байт.
+func Compress(data []byte) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	zb := gzip.NewWriter(buf)
+	_, err := zb.Write(data)
+	if err != nil {
+		return nil, err
+	}
+	err = zb.Close()
+	return buf.Bytes(), err
 }

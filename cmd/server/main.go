@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/Gamilkarr/stattrack/internal/compress"
 	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -36,7 +37,7 @@ func main() {
 		log.WithField("fatal error", err).Fatal()
 	}
 
-	log.WithField("fatal error", http.ListenAndServe(cfg.Address, logger.WithLogging(NewRouter(h)))).Fatal()
+	log.WithField("fatal error", http.ListenAndServe(cfg.Address, logger.WithLogging(compress.GzipMiddleware(NewRouter(h))))).Fatal()
 }
 
 func NewRouter(h *handlers.Handler) *chi.Mux {
