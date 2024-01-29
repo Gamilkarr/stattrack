@@ -7,7 +7,7 @@ import (
 )
 
 func WithLogging(h http.Handler) http.Handler {
-	logFn := func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
 		uri := r.RequestURI
@@ -35,8 +35,7 @@ func WithLogging(h http.Handler) http.Handler {
 			"size":     responseData.size,
 		}).Info()
 
-	}
-	return http.HandlerFunc(logFn)
+	})
 }
 
 type (
