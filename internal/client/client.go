@@ -1,10 +1,15 @@
 package client
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/json"
 	"fmt"
+	"log"
+
+	"github.com/Gamilkarr/stattrack/internal/models"
 	"github.com/Gamilkarr/stattrack/internal/service"
 	"github.com/go-resty/resty/v2"
-	"log"
 )
 
 type Agent struct {
@@ -14,7 +19,7 @@ type Agent struct {
 
 type Metrics interface {
 	UpdateMetrics()
-	GetAllMetrics() []map[string]string
+	GetAllMetrics() []models.Metric
 }
 
 func NewAgent() (*Agent, error) {
@@ -25,15 +30,31 @@ func NewAgent() (*Agent, error) {
 }
 
 func (a *Agent) SendMetrics(adr string) {
-	url := fmt.Sprintf("http://%s/update/{type}/{name}/{value}", adr)
+	url := fmt.Sprintf("http://%s/update/", adr)
 	mSlice := a.GetAllMetrics()
 	for _, metric := range mSlice {
+		msg, _ := json.Marshal(metric)
+		cMsg, _ := Compress(msg)
 		_, err := a.Client.R().
-			SetHeader("Content-Type", "text/plain").
-			SetPathParams(metric).
+			SetHeader("Content-Type", "application/json").
+			SetHeader("Content-Encoding", "gzip").
+			SetHeader("Accept-Encoding", "gzip").
+			SetBody(cMsg).
 			Post(url)
 		if err != nil {
 			log.Println(err)
 		}
 	}
+}
+
+// Compress сжимает слайс байт.
+func Compress(data []byte) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	zb := gzip.NewWriter(buf)
+	_, err := zb.Write(data)
+	if err != nil {
+		return nil, err
+	}
+	err = zb.Close()
+	return buf.Bytes(), err
 }

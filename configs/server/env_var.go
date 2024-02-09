@@ -5,7 +5,10 @@ import (
 )
 
 type envVar struct {
-	Address string `env:"ADDRESS"`
+	Address         string `env:"ADDRESS"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	StoreInterval   int64  `env:"STORE_INTERVAL"`
+	Restore         string `env:"RESTORE"`
 }
 
 func getEnvVar() (*envVar, error) {
