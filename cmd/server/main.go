@@ -4,13 +4,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
 
 	config "github.com/Gamilkarr/stattrack/configs/server"
-	"github.com/Gamilkarr/stattrack/internal/compress"
 	"github.com/Gamilkarr/stattrack/internal/handlers"
-	"github.com/Gamilkarr/stattrack/internal/logger"
+	"github.com/Gamilkarr/stattrack/internal/middleware"
 	"github.com/Gamilkarr/stattrack/internal/repository"
 )
 
@@ -46,18 +44,8 @@ func main() {
 		go repo.RunBackUP()
 	}
 
-	log.WithField("fatal error", http.ListenAndServe(cfg.Address, logger.WithLogging(compress.GzipMiddleware(NewRouter(h))))).Fatal()
-}
-
-func NewRouter(h *handlers.Handler) *chi.Mux {
-	r := chi.NewRouter()
-	r.Get("/", h.GetMetrics)
-
-	r.Post("/update/", h.UpdateJSONMetrics)
-	r.Post("/update/{type}/{name}/{value}", h.UpdateMetrics)
-
-	r.Post("/value/", h.GetJSONValueMetric)
-	r.Get("/value/{type}/{name}", h.GetValueMetric)
-
-	return r
+	route := h.NewRouter()
+	if servErr := http.ListenAndServe(cfg.Address, middleware.Logging(middleware.CompressGzip(route))); servErr != nil {
+		log.WithField("error", servErr).Fatal("server error")
+	}
 }

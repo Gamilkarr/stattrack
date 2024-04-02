@@ -1,12 +1,13 @@
-package logger
+package middleware
 
 import (
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
-func WithLogging(h http.Handler) http.Handler {
+func Logging(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
