@@ -7,7 +7,7 @@ import (
 type envVar struct {
 	Address         string `env:"ADDRESS"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
-	StoreInterval   int64  `env:"STORE_INTERVAL"`
+	StoreInterval   int64  `env:"STORE_INTERVAL" envDefault:"-1"`
 	Restore         string `env:"RESTORE"`
 }
 

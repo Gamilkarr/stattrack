@@ -25,4 +25,4 @@ vendor/
 .vscode
 
 *.log
-tmp/
+internal/repository/tmp/

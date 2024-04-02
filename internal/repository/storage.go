@@ -2,18 +2,23 @@ package repository
 
 import (
 	"errors"
+
 	"github.com/Gamilkarr/stattrack/internal/models"
 )
 
 type MemStorage struct {
-	Gauge   map[string]float64
-	Counter map[string]int64
+	Gauge        map[string]float64
+	Counter      map[string]int64
+	BackUPPeriod int64
+	BackUPPath   string
 }
 
-func NewRepo() (*MemStorage, error) {
+func NewRepo(period int64, path string) (*MemStorage, error) {
 	return &MemStorage{
-		Gauge:   make(map[string]float64),
-		Counter: make(map[string]int64),
+		Gauge:        make(map[string]float64),
+		Counter:      make(map[string]int64),
+		BackUPPeriod: period,
+		BackUPPath:   path,
 	}, nil
 }
 
@@ -38,6 +43,9 @@ func (m *MemStorage) UpdateMetrics(metric models.Metric) models.Metric {
 			Delta: &val,
 			Value: nil,
 		}
+	}
+	if m.BackUPPeriod == 0 {
+		m.backUP()
 	}
 	return result
 }

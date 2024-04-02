@@ -1,11 +1,9 @@
 package configs
 
-import "time"
-
 type Config struct {
 	Address         string
 	FileStoragePath string
-	StoreInterval   time.Duration
+	StoreInterval   int64
 	Restore         bool
 }
 
@@ -22,7 +20,7 @@ func NewConfig() (*Config, error) {
 	cfg := &Config{
 		Address:         eVar.Address,
 		FileStoragePath: eVar.FileStoragePath,
-		StoreInterval:   time.Duration(eVar.StoreInterval) * time.Second,
+		StoreInterval:   eVar.StoreInterval,
 	}
 
 	switch eVar.Restore {
@@ -42,8 +40,8 @@ func NewConfig() (*Config, error) {
 		cfg.FileStoragePath = flag.fileStoragePath
 	}
 
-	if cfg.StoreInterval == 0 {
-		cfg.StoreInterval = time.Duration(flag.storeInterval) * time.Second
+	if eVar.StoreInterval == -1 {
+		cfg.StoreInterval = flag.storeInterval
 	}
 
 	return cfg, nil
