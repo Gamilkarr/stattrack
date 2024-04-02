@@ -2,34 +2,36 @@ package configs
 
 import (
 	"flag"
-
-	"github.com/Gamilkarr/stattrack/configs"
+	"fmt"
+	"strings"
 )
 
 type flags struct {
-	flagRunAddr     configs.NetAddress
+	flagRunAddr     string
 	fileStoragePath string
 	storeInterval   int64
 	restore         bool
 }
 
 func parseFlags() (flags, error) {
-	addr := configs.NetAddress{
-		Host: "localhost",
-		Port: 8080,
-	}
-	_ = flag.Value(&addr)
-	flag.Var(&addr, "a", "address and port to run server")
-
-	fileStoragePath := flag.String("f", "/Users/takhabarova/learningProjects/stattrack/tmp/metrics-db.json", "path for saving server data to disk")
+	addr := flag.String("a", "localhost:8080", "address and port to run server")
+	fileStoragePath := flag.String("f", "stattrack/tmp/metrics-db.json", "path for saving server data to disk")
 	storeInterval := flag.Int64("i", 300, "time interval for saving server readings to disk")
 	restore := flag.Bool("r", true, "Is load previously saved values")
 
 	flag.Parse()
 	return flags{
-		flagRunAddr:     addr,
+		flagRunAddr:     correctAddr(addr),
 		storeInterval:   *storeInterval,
 		fileStoragePath: *fileStoragePath,
 		restore:         *restore,
 	}, nil
+}
+
+func correctAddr(addr *string) string {
+	before, _, found := strings.Cut(*addr, ":")
+	if !found {
+		return fmt.Sprintf("localhost:%s", before)
+	}
+	return *addr
 }

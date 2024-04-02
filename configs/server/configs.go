@@ -33,7 +33,7 @@ func NewConfig() (*Config, error) {
 	}
 
 	if cfg.Address == "" {
-		cfg.Address = flag.flagRunAddr.String()
+		cfg.Address = flag.flagRunAddr
 	}
 
 	if cfg.FileStoragePath == "" {

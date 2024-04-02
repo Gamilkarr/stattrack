@@ -2,30 +2,33 @@ package configs
 
 import (
 	"flag"
-
-	"github.com/Gamilkarr/stattrack/configs"
+	"fmt"
+	"strings"
 )
 
 type flags struct {
-	flagRunAddr    configs.NetAddress
+	flagRunAddr    string
 	reportInterval int64
 	pollInterval   int64
 }
 
 func parseFlags() (flags, error) {
-	addr := configs.NetAddress{
-		Host: "localhost",
-		Port: 8080,
-	}
-	_ = flag.Value(&addr)
-	flag.Var(&addr, "a", "address and port to run server")
+	addr := flag.String("a", "localhost:8080", "address and port to run server")
 	report := flag.Int64("r", 10, "metrics sending interval in seconds")
 	poll := flag.Int64("p", 2, "metrics update interval in seconds")
 	flag.Parse()
 
 	return flags{
-		flagRunAddr:    addr,
+		flagRunAddr:    correctAddr(addr),
 		reportInterval: *report,
 		pollInterval:   *poll,
 	}, nil
+}
+
+func correctAddr(addr *string) string {
+	before, _, found := strings.Cut(*addr, ":")
+	if !found {
+		return fmt.Sprintf("localhost:%s", before)
+	}
+	return *addr
 }
