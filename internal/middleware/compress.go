@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type compressWriter struct {
@@ -82,7 +84,12 @@ func CompressGzip(h http.Handler) http.Handler {
 		if supportsGzip && supportsType {
 			cw := newCompressWriter(w)
 			ow = cw
-			defer cw.Close()
+			defer func(cw *compressWriter) {
+				err := cw.Close()
+				if err != nil {
+					log.WithField("compress gzip error", err).Error("closing error")
+				}
+			}(cw)
 			ow.Header().Set("Content-Encoding", "gzip")
 		}
 
@@ -95,7 +102,12 @@ func CompressGzip(h http.Handler) http.Handler {
 				return
 			}
 			r.Body = cr
-			defer cr.Close()
+			defer func(cr *compressReader) {
+				err := cr.Close()
+				if err != nil {
+					log.WithField("compress gzip error", err).Error("closing error")
+				}
+			}(cr)
 		}
 
 		h.ServeHTTP(ow, r)

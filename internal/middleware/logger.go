@@ -28,7 +28,7 @@ func Logging(h http.Handler) http.Handler {
 
 		duration := time.Since(start)
 
-		log.WithFields(log.Fields{
+		defer log.WithFields(log.Fields{
 			"uri":      uri,
 			"method":   method,
 			"status":   responseData.status,

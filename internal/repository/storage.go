@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Gamilkarr/stattrack/internal/models"
 )
@@ -13,16 +14,16 @@ type MemStorage struct {
 	BackUPPath   string
 }
 
-func NewRepo(period int64, path string) (*MemStorage, error) {
+func NewRepo(period int64, path string) *MemStorage {
 	return &MemStorage{
 		Gauge:        make(map[string]float64),
 		Counter:      make(map[string]int64),
 		BackUPPeriod: period,
 		BackUPPath:   path,
-	}, nil
+	}
 }
 
-func (m *MemStorage) UpdateMetrics(metric models.Metric) models.Metric {
+func (m *MemStorage) UpdateMetrics(metric models.Metric) (models.Metric, error) {
 	var result models.Metric
 	switch metric.MType {
 	case models.MetricGauge:
@@ -45,9 +46,12 @@ func (m *MemStorage) UpdateMetrics(metric models.Metric) models.Metric {
 		}
 	}
 	if m.BackUPPeriod == 0 {
-		m.backUP()
+		err := m.backUP()
+		if err != nil {
+			return result, fmt.Errorf("storage error: %w", err)
+		}
 	}
-	return result
+	return result, nil
 }
 
 func (m *MemStorage) GetMetricsValue(metric models.Metric) (*models.Metric, error) {
@@ -56,7 +60,7 @@ func (m *MemStorage) GetMetricsValue(metric models.Metric) (*models.Metric, erro
 	case models.MetricGauge:
 		value, ok := m.Gauge[metric.ID]
 		if !ok {
-			return nil, errors.New("metric not found")
+			return nil, errors.New("storage error: gauge metric not found")
 		}
 		result = models.Metric{
 			ID:    metric.ID,
@@ -67,7 +71,7 @@ func (m *MemStorage) GetMetricsValue(metric models.Metric) (*models.Metric, erro
 	case models.MetricCounter:
 		value, ok := m.Counter[metric.ID]
 		if !ok {
-			return nil, errors.New("metric not found")
+			return nil, errors.New("storage error: counter metric not found")
 		}
 		result = models.Metric{
 			ID:    metric.ID,

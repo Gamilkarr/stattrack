@@ -17,34 +17,36 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.WithField("error", err).Error("file closing error")
+		}
+	}(file)
 	log.SetOutput(file)
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.InfoLevel)
 
 	cfg, err := config.NewConfig()
 	if err != nil {
-		log.WithField("fatal error", err).Fatal()
+		log.WithField("error", err).Fatal("config error")
 	}
 
-	repo, err := repository.NewRepo(cfg.StoreInterval, cfg.FileStoragePath)
-	if err != nil {
-		log.WithField("fatal error", err).Fatal()
-	}
-	h, err := handlers.NewHandler(repo)
-	if err != nil {
-		log.WithField("fatal error", err).Fatal()
-	}
+	repo := repository.NewRepo(cfg.StoreInterval, cfg.FileStoragePath)
+	handler := handlers.NewHandler(repo)
+	route := handler.NewRouter()
 
 	if cfg.Restore {
-		log.WithField("fatal error", repo.Uploading(cfg.FileStoragePath))
+		err := repo.Uploading(cfg.FileStoragePath)
+		if err != nil {
+			log.WithField("error", err).Error("backup data loading error")
+		}
 	}
 
 	if repo.BackUPPeriod != 0 {
 		go repo.RunBackUP()
 	}
 
-	route := h.NewRouter()
 	if servErr := http.ListenAndServe(cfg.Address, middleware.Logging(middleware.CompressGzip(route))); servErr != nil {
 		log.WithField("error", servErr).Fatal("server error")
 	}

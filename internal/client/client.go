@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/Gamilkarr/stattrack/internal/models"
 	"github.com/Gamilkarr/stattrack/internal/service"
@@ -29,22 +28,29 @@ func NewAgent() (*Agent, error) {
 	}, nil
 }
 
-func (a *Agent) SendMetrics(adr string) {
+func (a *Agent) SendMetrics(adr string) error {
 	url := fmt.Sprintf("http://%s/update/", adr)
 	mSlice := a.GetAllMetrics()
 	for _, metric := range mSlice {
-		msg, _ := json.Marshal(metric)
-		cMsg, _ := Compress(msg)
-		_, err := a.Client.R().
+		msg, err := json.Marshal(metric)
+		if err != nil {
+			return fmt.Errorf("sending error: %w", err)
+		}
+		cMsg, err := Compress(msg)
+		if err != nil {
+			return fmt.Errorf("sending error: %w", err)
+		}
+		_, err = a.Client.R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Content-Encoding", "gzip").
 			SetHeader("Accept-Encoding", "gzip").
 			SetBody(cMsg).
 			Post(url)
 		if err != nil {
-			log.Println(err)
+			return fmt.Errorf("sending error: %w", err)
 		}
 	}
+	return nil
 }
 
 // Compress сжимает слайс байт.

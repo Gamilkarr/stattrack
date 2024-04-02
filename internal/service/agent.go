@@ -1,9 +1,10 @@
 package service
 
 import (
-	"github.com/Gamilkarr/stattrack/internal/models"
 	"math/rand"
 	"runtime"
+
+	"github.com/Gamilkarr/stattrack/internal/models"
 )
 
 type Metrics struct {

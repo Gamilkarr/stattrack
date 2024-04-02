@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/Gamilkarr/stattrack/internal/models"
 )
@@ -32,7 +34,6 @@ func (h *Handler) UpdateMetrics(res http.ResponseWriter, req *http.Request) {
 			MType: metricType,
 			Value: &value,
 		}
-		result = h.Repo.UpdateMetrics(metricForUpdate)
 
 	case models.MetricCounter:
 		value, err := strconv.ParseInt(metricValue, 10, 64)
@@ -45,15 +46,28 @@ func (h *Handler) UpdateMetrics(res http.ResponseWriter, req *http.Request) {
 			MType: metricType,
 			Delta: &value,
 		}
-		result = h.Repo.UpdateMetrics(metricForUpdate)
 	default:
 		http.Error(res, "unknown metric type", http.StatusBadRequest)
 		return
 	}
-	resJSON, _ := json.Marshal(result)
+
+	result, err := h.Repo.UpdateMetrics(metricForUpdate)
+	if err != nil {
+		log.WithField("error", err).Error("handler error")
+	}
+
+	resJSON, err := json.Marshal(result)
+	if err != nil {
+		log.WithField("error", err).Error("handler error")
+	}
+
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
-	res.Write(resJSON)
+
+	_, err = res.Write(resJSON)
+	if err != nil {
+		log.WithField("error", err).Error("handler error")
+	}
 }
 
 func (h *Handler) GetValueMetric(res http.ResponseWriter, req *http.Request) {
@@ -85,14 +99,21 @@ func (h *Handler) GetValueMetric(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	res.WriteHeader(http.StatusOK)
-	res.Write([]byte(value))
+
+	_, err = res.Write([]byte(value))
+	if err != nil {
+		log.WithField("error", err).Error("handler error")
+	}
 }
 
 func (h *Handler) GetMetrics(res http.ResponseWriter, req *http.Request) {
 	mes := h.Repo.GetMetrics()
 	resJSON, _ := json.Marshal(mes)
 	res.Header().Set("Content-Type", "text/html")
-	res.Write(resJSON)
+	_, err := res.Write(resJSON)
+	if err != nil {
+		log.WithField("error", err).Error("handler error")
+	}
 }
 
 func (h *Handler) UpdateJSONMetrics(res http.ResponseWriter, req *http.Request) {
@@ -107,12 +128,22 @@ func (h *Handler) UpdateJSONMetrics(res http.ResponseWriter, req *http.Request) 
 		http.Error(res, "something wrong", http.StatusInternalServerError)
 		return
 	}
-	result := h.Repo.UpdateMetrics(metricsForUpdate)
 
-	resJSON, _ := json.Marshal(result)
+	result, err := h.Repo.UpdateMetrics(metricsForUpdate)
+	if err != nil {
+		log.WithField("error", err).Error("handler error")
+	}
+
+	resJSON, err := json.Marshal(result)
+	if err != nil {
+		log.WithField("error", err).Error("handler error")
+	}
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
-	res.Write(resJSON)
+	_, err = res.Write(resJSON)
+	if err != nil {
+		log.WithField("error", err).Error("handler error")
+	}
 }
 
 func (h *Handler) GetJSONValueMetric(res http.ResponseWriter, req *http.Request) {
@@ -136,8 +167,14 @@ func (h *Handler) GetJSONValueMetric(res http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	resJSON, _ := json.Marshal(metricValue)
+	resJSON, err := json.Marshal(metricValue)
+	if err != nil {
+		log.WithField("error", err).Error("handler error")
+	}
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
-	res.Write(resJSON)
+	_, err = res.Write(resJSON)
+	if err != nil {
+		log.WithField("error", err).Error("handler error")
+	}
 }
