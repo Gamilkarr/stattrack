@@ -3,48 +3,35 @@ package configs
 import (
 	"flag"
 	"fmt"
-	"strconv"
 	"strings"
 )
 
-type netAddress struct {
-	host string
-	port int
-}
-
-func (n *netAddress) String() string {
-	return fmt.Sprintf("%s:%d", n.host, n.port)
-}
-
-func (n *netAddress) Set(s string) error {
-	host, strPort, _ := strings.Cut(s, ":")
-
-	if host != "" {
-		n.host = host
-	}
-
-	if strPort == "" {
-		return nil
-	}
-	port, parseErr := strconv.Atoi(strPort)
-	if parseErr != nil {
-		return parseErr
-	}
-	n.port = port
-	return nil
-}
-
 type flags struct {
-	flagRunAddr netAddress
+	flagRunAddr     string
+	fileStoragePath string
+	storeInterval   int64
+	restore         bool
 }
 
 func parseFlags() (flags, error) {
-	addr := netAddress{
-		host: "localhost",
-		port: 8080,
-	}
-	_ = flag.Value(&addr)
-	flag.Var(&addr, "a", "address and port to run server")
+	addr := flag.String("a", "localhost:8080", "address and port to run server")
+	fileStoragePath := flag.String("f", "stattrack/tmp/metrics-db.json", "path for saving server data to disk")
+	storeInterval := flag.Int64("i", 300, "time interval for saving server readings to disk")
+	restore := flag.Bool("r", true, "Is load previously saved values")
+
 	flag.Parse()
-	return flags{flagRunAddr: addr}, nil
+	return flags{
+		flagRunAddr:     correctAddr(addr),
+		storeInterval:   *storeInterval,
+		fileStoragePath: *fileStoragePath,
+		restore:         *restore,
+	}, nil
+}
+
+func correctAddr(addr *string) string {
+	before, _, found := strings.Cut(*addr, ":")
+	if !found {
+		return fmt.Sprintf("localhost:%s", before)
+	}
+	return *addr
 }

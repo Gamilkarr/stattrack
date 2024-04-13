@@ -1,9 +1,10 @@
 package service
 
 import (
-	"fmt"
 	"math/rand"
 	"runtime"
+
+	"github.com/Gamilkarr/stattrack/internal/models"
 )
 
 type Metrics struct {
@@ -59,13 +60,23 @@ func (m *Metrics) UpdateMetrics() {
 	m.UpdateCounterMetrics()
 }
 
-func (m *Metrics) GetAllMetrics() []map[string]string {
-	result := make([]map[string]string, 0, len(m.CounterMetrics)+len(m.GaugeMetrics))
+func (m *Metrics) GetAllMetrics() []models.Metric {
+	result := make([]models.Metric, 0, len(m.CounterMetrics)+len(m.GaugeMetrics))
 	for name, value := range m.CounterMetrics {
-		result = append(result, map[string]string{"type": "counter", "name": name, "value": fmt.Sprintf("%d", value)})
+		value := value
+		result = append(result, models.Metric{
+			ID:    name,
+			MType: "counter",
+			Delta: &value,
+		})
 	}
 	for name, value := range m.GaugeMetrics {
-		result = append(result, map[string]string{"type": "gauge", "name": name, "value": fmt.Sprintf("%g", value)})
+		value := value
+		result = append(result, models.Metric{
+			ID:    name,
+			MType: "gauge",
+			Value: &value,
+		})
 	}
 	return result
 }

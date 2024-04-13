@@ -1,43 +1,107 @@
 package repository
 
+import (
+	"errors"
+	"fmt"
+
+	"github.com/Gamilkarr/stattrack/internal/models"
+)
+
 type MemStorage struct {
-	Gauge   map[string]float64
-	Counter map[string]int64
+	Gauge        map[string]float64
+	Counter      map[string]int64
+	BackUPPeriod int64
+	BackUPPath   string
 }
 
-func NewRepo() (*MemStorage, error) {
+func NewRepo(period int64, path string) *MemStorage {
 	return &MemStorage{
-		Gauge:   make(map[string]float64),
-		Counter: make(map[string]int64),
-	}, nil
-}
-
-func (m *MemStorage) UpdateGaugeMetrics(name string, val float64) error {
-	m.Gauge[name] = val
-	return nil
-}
-func (m *MemStorage) UpdateCounterMetrics(name string, val int64) error {
-	m.Counter[name] += val
-	return nil
-}
-
-func (m *MemStorage) GetGaugeMetricValue(name string) (float64, bool) {
-	if val, ok := m.Gauge[name]; ok {
-		return val, true
+		Gauge:        make(map[string]float64),
+		Counter:      make(map[string]int64),
+		BackUPPeriod: period,
+		BackUPPath:   path,
 	}
-	return 0, false
 }
-func (m *MemStorage) GetCounterMetricValue(name string) (int64, bool) {
-	if val, ok := m.Counter[name]; ok {
-		return val, true
+
+func (m *MemStorage) UpdateMetrics(metric models.Metric) (models.Metric, error) {
+	var result models.Metric
+	switch metric.MType {
+	case models.MetricGauge:
+		m.Gauge[metric.ID] = *metric.Value
+		val := m.Gauge[metric.ID]
+		result = models.Metric{
+			ID:    metric.ID,
+			MType: models.MetricGauge,
+			Delta: nil,
+			Value: &val,
+		}
+	case models.MetricCounter:
+		m.Counter[metric.ID] += *metric.Delta
+		val := m.Counter[metric.ID]
+		result = models.Metric{
+			ID:    metric.ID,
+			MType: models.MetricCounter,
+			Delta: &val,
+			Value: nil,
+		}
 	}
-	return 0, false
+	if m.BackUPPeriod == 0 {
+		err := m.backUP()
+		if err != nil {
+			return result, fmt.Errorf("storage error: %w", err)
+		}
+	}
+	return result, nil
 }
 
-func (m *MemStorage) GetCounterMetrics() map[string]int64 {
-	return m.Counter
+func (m *MemStorage) GetMetricsValue(metric models.Metric) (*models.Metric, error) {
+	var result models.Metric
+	switch metric.MType {
+	case models.MetricGauge:
+		value, ok := m.Gauge[metric.ID]
+		if !ok {
+			return nil, errors.New("storage error: gauge metric not found")
+		}
+		result = models.Metric{
+			ID:    metric.ID,
+			MType: models.MetricGauge,
+			Delta: nil,
+			Value: &value,
+		}
+	case models.MetricCounter:
+		value, ok := m.Counter[metric.ID]
+		if !ok {
+			return nil, errors.New("storage error: counter metric not found")
+		}
+		result = models.Metric{
+			ID:    metric.ID,
+			MType: models.MetricCounter,
+			Delta: &value,
+			Value: nil,
+		}
+	}
+	return &result, nil
 }
 
-func (m *MemStorage) GetGaugeMetrics() map[string]float64 {
-	return m.Gauge
+func (m *MemStorage) GetMetrics() []models.Metric {
+	result := make([]models.Metric, 0)
+	for key, value := range m.Gauge {
+		value := value
+		result = append(result, models.Metric{
+			ID:    key,
+			MType: models.MetricGauge,
+			Delta: nil,
+			Value: &value,
+		})
+	}
+	for key, value := range m.Counter {
+		value := value
+		result = append(result, models.Metric{
+			ID:    key,
+			MType: models.MetricCounter,
+			Delta: &value,
+			Value: nil,
+		})
+	}
+	return result
 }

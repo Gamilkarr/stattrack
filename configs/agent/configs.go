@@ -21,13 +21,13 @@ func NewConfig() (*Config, error) {
 	}
 
 	cfg := &Config{
-		Address:        eVar.address,
-		PollInterval:   time.Duration(eVar.pollInterval) * time.Second,
-		ReportInterval: time.Duration(eVar.reportInterval) * time.Second,
+		Address:        eVar.Address,
+		PollInterval:   time.Duration(eVar.PollInterval) * time.Second,
+		ReportInterval: time.Duration(eVar.ReportInterval) * time.Second,
 	}
 
 	if cfg.Address == "" {
-		cfg.Address = flag.flagRunAddr.String()
+		cfg.Address = flag.flagRunAddr
 	}
 
 	if cfg.PollInterval == 0 {
