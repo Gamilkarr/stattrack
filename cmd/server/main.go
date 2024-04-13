@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"os"
 
@@ -35,10 +34,7 @@ func main() {
 		log.WithField("error", err).Fatal("config error")
 	}
 
-	ps := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		"localhost", "5432", "user", "password", "stattrack")
-
-	db, err := sql.Open("pgx", ps)
+	db, err := sql.Open("pgx", cfg.DatabaseDSN)
 	if err != nil {
 		log.WithField("error", err).Fatal("database connection error")
 	}

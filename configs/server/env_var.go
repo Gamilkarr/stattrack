@@ -9,6 +9,7 @@ type envVar struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	StoreInterval   int64  `env:"STORE_INTERVAL" envDefault:"-1"`
 	Restore         string `env:"RESTORE"`
+	DatabaseDSN     string `env:"DATABASE_DSN"`
 }
 
 func getEnvVar() (*envVar, error) {
