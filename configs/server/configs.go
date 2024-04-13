@@ -5,6 +5,7 @@ type Config struct {
 	FileStoragePath string
 	StoreInterval   int64
 	Restore         bool
+	DatabaseDSN     string
 }
 
 func NewConfig() (*Config, error) {
@@ -21,6 +22,7 @@ func NewConfig() (*Config, error) {
 		Address:         eVar.Address,
 		FileStoragePath: eVar.FileStoragePath,
 		StoreInterval:   eVar.StoreInterval,
+		DatabaseDSN:     eVar.DatabaseDSN,
 	}
 
 	switch eVar.Restore {
@@ -42,6 +44,10 @@ func NewConfig() (*Config, error) {
 
 	if eVar.StoreInterval == -1 {
 		cfg.StoreInterval = flag.storeInterval
+	}
+
+	if eVar.DatabaseDSN == "" {
+		cfg.DatabaseDSN = flag.databaseDSN
 	}
 
 	return cfg, nil

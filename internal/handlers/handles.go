@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
@@ -177,4 +179,14 @@ func (h *Handler) GetJSONValueMetric(res http.ResponseWriter, req *http.Request)
 	if err != nil {
 		log.WithField("error", err).Error("handler error")
 	}
+}
+
+func (h *Handler) Ping(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	if err := h.db.PingContext(ctx); err != nil {
+		http.Error(res, "ping error", http.StatusInternalServerError)
+		log.WithField("error", err).Error("ping error")
+	}
+	res.WriteHeader(http.StatusOK)
 }

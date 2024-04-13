@@ -11,13 +11,23 @@ type flags struct {
 	fileStoragePath string
 	storeInterval   int64
 	restore         bool
+	databaseDSN     string
 }
 
 func parseFlags() (flags, error) {
 	addr := flag.String("a", "localhost:8080", "address and port to run server")
-	fileStoragePath := flag.String("f", "stattrack/tmp/metrics-db.json", "path for saving server data to disk")
+	fileStoragePath := flag.String(
+		"f",
+		"stattrack/tmp/metrics-db.json",
+		"path for saving server data to disk",
+	)
 	storeInterval := flag.Int64("i", 300, "time interval for saving server readings to disk")
 	restore := flag.Bool("r", true, "Is load previously saved values")
+	databaseDSN := flag.String(
+		"d",
+		"host=localhost port=5432 user=user password=password dbname=stattrack sslmode=disable",
+		"database connection address",
+	)
 
 	flag.Parse()
 	return flags{
@@ -25,6 +35,7 @@ func parseFlags() (flags, error) {
 		storeInterval:   *storeInterval,
 		fileStoragePath: *fileStoragePath,
 		restore:         *restore,
+		databaseDSN:     *databaseDSN,
 	}, nil
 }
 

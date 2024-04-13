@@ -1,9 +1,11 @@
 package main
 
 import (
+	"database/sql"
 	"net/http"
 	"os"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
 	log "github.com/sirupsen/logrus"
 
 	config "github.com/Gamilkarr/stattrack/configs/server"
@@ -32,8 +34,19 @@ func main() {
 		log.WithField("error", err).Fatal("config error")
 	}
 
+	db, err := sql.Open("pgx", cfg.DatabaseDSN)
+	if err != nil {
+		log.WithField("error", err).Fatal("database connection error")
+	}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.WithField("error", err).Error("database connection closing error")
+		}
+	}(db)
+
 	repo := repository.NewRepo(cfg.StoreInterval, cfg.FileStoragePath)
-	handler := handlers.NewHandler(repo)
+	handler := handlers.NewHandler(repo, db)
 	route := handler.NewRouter()
 
 	if cfg.Restore {

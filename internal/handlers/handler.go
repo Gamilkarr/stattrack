@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"database/sql"
+
 	"github.com/Gamilkarr/stattrack/internal/models"
 )
 
 type Handler struct {
 	Repo repo
+	db   *sql.DB
 }
 
 type repo interface {
@@ -14,6 +17,9 @@ type repo interface {
 	GetMetrics() []models.Metric
 }
 
-func NewHandler(repo repo) *Handler {
-	return &Handler{Repo: repo}
+func NewHandler(repo repo, db *sql.DB) *Handler {
+	return &Handler{
+		Repo: repo,
+		db:   db,
+	}
 }

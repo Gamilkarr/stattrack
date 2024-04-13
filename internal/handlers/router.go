@@ -6,6 +6,8 @@ func (h *Handler) NewRouter() *chi.Mux {
 	r := chi.NewRouter()
 	r.Get("/", h.GetMetrics)
 
+	r.Get("/ping", h.Ping)
+
 	r.Post("/update/", h.UpdateJSONMetrics)
 	r.Post("/update/{type}/{name}/{value}", h.UpdateMetrics)
 
