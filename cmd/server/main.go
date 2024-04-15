@@ -34,31 +34,29 @@ func main() {
 		log.WithField("error", err).Fatal("config error")
 	}
 
-	db, err := sql.Open("pgx", cfg.DatabaseDSN)
-	if err != nil {
-		log.WithField("error", err).Fatal("database connection error")
-	}
-	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			log.WithField("error", err).Error("database connection closing error")
-		}
-	}(db)
+	var repo handlers.Repository
 
-	repo := repository.NewRepo(cfg.StoreInterval, cfg.FileStoragePath)
-	handler := handlers.NewHandler(repo, db)
+	if cfg.DatabaseDSN != "" {
+		db, err := sql.Open("pgx", cfg.DatabaseDSN)
+		if err != nil {
+			log.WithField("error", err).Fatal("database connection error")
+		}
+		defer func(db *sql.DB) {
+			err := db.Close()
+			if err != nil {
+				log.WithField("error", err).Error("database connection closing error")
+			}
+		}(db)
+
+		repo, err = repository.NewDataBase(db)
+		if err != nil {
+			log.WithField("error", err).Error("storage creation error")
+		}
+	} else {
+		repo = repository.NewMemStorage(cfg.StoreInterval, cfg.FileStoragePath, cfg.Restore)
+	}
+	handler := handlers.NewHandler(repo)
 	route := handler.NewRouter()
-
-	if cfg.Restore {
-		err := repo.Uploading(cfg.FileStoragePath)
-		if err != nil {
-			log.WithField("error", err).Error("backup data loading error")
-		}
-	}
-
-	if repo.BackUPPeriod != 0 {
-		go repo.RunBackUP()
-	}
 
 	if servErr := http.ListenAndServe(cfg.Address, middleware.Logging(middleware.CompressGzip(route))); servErr != nil {
 		log.WithField("error", servErr).Fatal("server error")

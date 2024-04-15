@@ -26,3 +26,5 @@ vendor/
 
 *.log
 internal/repository/tmp/
+
+/tmp
