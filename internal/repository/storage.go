@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Gamilkarr/stattrack/internal/models"
+	log "github.com/sirupsen/logrus"
 )
 
 type MemStorage struct {
@@ -14,13 +15,29 @@ type MemStorage struct {
 	BackUPPath   string
 }
 
-func NewRepo(period int64, path string) *MemStorage {
-	return &MemStorage{
+func NewMemStorage(period int64, path string, restore bool) *MemStorage {
+	store := MemStorage{
 		Gauge:        make(map[string]float64),
 		Counter:      make(map[string]int64),
 		BackUPPeriod: period,
 		BackUPPath:   path,
 	}
+
+	if restore {
+		err := store.Uploading(store.BackUPPath)
+		if err != nil {
+			log.WithField("error", err).Error("backup loading error")
+		}
+	}
+
+	if store.BackUPPeriod != 0 {
+		go store.RunBackUP()
+	}
+	return &store
+}
+
+func (m *MemStorage) Ping() error {
+	return fmt.Errorf("")
 }
 
 func (m *MemStorage) UpdateMetrics(metric models.Metric) (models.Metric, error) {

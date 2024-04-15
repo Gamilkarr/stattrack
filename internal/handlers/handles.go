@@ -2,12 +2,10 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
@@ -108,7 +106,7 @@ func (h *Handler) GetValueMetric(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (h *Handler) GetMetrics(res http.ResponseWriter, req *http.Request) {
+func (h *Handler) GetMetrics(res http.ResponseWriter, _ *http.Request) {
 	mes := h.Repo.GetMetrics()
 	resJSON, _ := json.Marshal(mes)
 	res.Header().Set("Content-Type", "text/html")
@@ -181,10 +179,8 @@ func (h *Handler) GetJSONValueMetric(res http.ResponseWriter, req *http.Request)
 	}
 }
 
-func (h *Handler) Ping(res http.ResponseWriter, req *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-	if err := h.db.PingContext(ctx); err != nil {
+func (h *Handler) Ping(res http.ResponseWriter, _ *http.Request) {
+	if err := h.Repo.Ping(); err != nil {
 		http.Error(res, "ping error", http.StatusInternalServerError)
 		log.WithField("error", err).Error("ping error")
 	}
